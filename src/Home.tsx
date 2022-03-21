@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import * as anchor from '@project-serum/anchor';
 
-import styled from 'styled-components';
-import { Container, Snackbar } from '@material-ui/core';
-import Paper from '@material-ui/core/Paper';
+import { Snackbar } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
-import Grid from '@material-ui/core/Grid';
 import { Transaction } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
@@ -16,14 +13,7 @@ import {
   mintOneToken,
 } from './candy-machine';
 import { AlertState, toDate, getAtaForMint } from './utils';
-
 import { Remaining, Price, Status, MintContainer } from './parts';
-
-const ConnectButton = styled(WalletDialogButton)`
-  width: 50%;
-  margin: 0 auto;
-  background: orange;
-`;
 
 export interface HomeProps {
   candyMachineId?: anchor.web3.PublicKey;
@@ -32,15 +22,10 @@ export interface HomeProps {
   rpcHost: string;
 }
 
-
 const Home = (props: HomeProps) => {
   const [isUserMinting, setIsUserMinting] = useState(false);
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
-  const [alertState, setAlertState] = useState<AlertState>({
-    open: false,
-    message: '',
-    severity: undefined,
-  });
+  const [alertState, setAlertState] = useState<AlertState>({open: false,message: '',severity: undefined,});
   const [isActive, setIsActive] = useState(false);
   const [endDate, setEndDate] = useState<Date>();
   const [itemsRemaining, setItemsRemaining] = useState<number>();
@@ -52,15 +37,7 @@ const Home = (props: HomeProps) => {
   const wallet = useWallet();
 
   const anchorWallet = useMemo(() => {
-    if (
-      !wallet ||
-      !wallet.publicKey ||
-      !wallet.signAllTransactions ||
-      !wallet.signTransaction
-    ) {
-      return;
-    }
-
+    if (!wallet || !wallet.publicKey || !wallet.signAllTransactions || !wallet.signTransaction ) { return; }
     return {
       publicKey: wallet.publicKey,
       signAllTransactions: wallet.signAllTransactions,
@@ -69,9 +46,7 @@ const Home = (props: HomeProps) => {
   }, [wallet]);
 
   const refreshCandyMachineState = useCallback(async () => {
-    if (!anchorWallet) {
-      return;
-    }
+    if (!anchorWallet) { return; }
 
     if (props.candyMachineId) {
       try {
@@ -282,40 +257,29 @@ const Home = (props: HomeProps) => {
   ]);
 
   return (
-    <Container style={{ marginTop: 100 }}>
-      <Container maxWidth="xs" style={{ position: 'relative' }}>
-        <Paper
-          style={{
-            padding: 24,
-            paddingBottom: 10,
-            //backgroundColor: '#151A1F',
-            borderRadius: 6,
-          }}
-        >
-          {!wallet.connected ? (
-            <Grid container alignItems="center" justify="center">
-              <ConnectButton>Connect Wallet</ConnectButton>
-            </Grid>
-          ) : (
-            <>
-              {candyMachine && (
-                <dl>
-                  <Remaining itemsRemaining={itemsRemaining} />
-                  <Price isWhitelistUser={isWhitelistUser} discountPrice={discountPrice} candyMachine={candyMachine} />
-                  <Status isActive={isActive} endDate={endDate} candyMachine={candyMachine} toggleMintButton={toggleMintButton} isPresale={isPresale} />
-                </dl>
-              )}
-              <MintContainer candyMachine={candyMachine} wallet={wallet} connection={props.connection} setIsUserMinting={setIsUserMinting} setAlertState={setAlertState} isUserMinting={isUserMinting} onMint={onMint} isActive={isActive} rpcUrl={rpcUrl} isPresale={isPresale} isWhitelistUser={isWhitelistUser} />
-            </>
-          )}
-          <small>Powered by METAPLEX</small>
-        </Paper>
-      </Container>
+    <>
+      <div style={{border: "1px solid #ccc", padding: "20px", width: "500px", margin: "100px auto"}}>
+        {!wallet.connected ? (
+          <WalletDialogButton>Connect Wallet</WalletDialogButton>
+        ) : (
+          <>
+            {candyMachine && (
+              <dl>
+                <Remaining itemsRemaining={itemsRemaining} />
+                <Price isWhitelistUser={isWhitelistUser} discountPrice={discountPrice} candyMachine={candyMachine} />
+                <Status isActive={isActive} endDate={endDate} candyMachine={candyMachine} toggleMintButton={toggleMintButton} isPresale={isPresale} />
+              </dl>
+            )}
+            <MintContainer candyMachine={candyMachine} wallet={wallet} connection={props.connection} setIsUserMinting={setIsUserMinting} setAlertState={setAlertState} isUserMinting={isUserMinting} onMint={onMint} isActive={isActive} rpcUrl={rpcUrl} isPresale={isPresale} isWhitelistUser={isWhitelistUser} />
+          </>
+        )}
+        <small style={{display: "block", textAlign: "center"}}>Powered by METAPLEX</small>
+      </div>
 
       <Snackbar open={alertState.open} autoHideDuration={6000} onClose={() => setAlertState({ ...alertState, open: false })}>
         <Alert onClose={() => setAlertState({ ...alertState, open: false })} severity={alertState.severity}>{alertState.message}</Alert>
       </Snackbar>
-    </Container>
+    </>
   );
 };
 
