@@ -6,22 +6,18 @@ import { Container, Snackbar } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
 import Grid from '@material-ui/core/Grid';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { Transaction } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 import {
   awaitTransactionSignatureConfirmation,
   CandyMachineAccount,
-  CANDY_MACHINE_PROGRAM,
   getCandyMachineState,
   mintOneToken,
 } from './candy-machine';
 import { AlertState, toDate, getAtaForMint } from './utils';
-import { MintButton } from './MintButton';
-import { GatewayProvider } from '@civic/solana-gateway-react';
-import { sendTransaction } from './connection';
 
-import { Remaining, Price, Status } from './parts';
+import { Remaining, Price, Status, MintContainer } from './parts';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 50%;
@@ -35,95 +31,6 @@ export interface HomeProps {
   txTimeout: number;
   rpcHost: string;
 }
-
-function MintContainer(
-  {connection, candyMachine, wallet, setIsUserMinting, setAlertState, isUserMinting, onMint, isActive, rpcUrl, isPresale, isWhitelistUser}:
-  {connection: any, candyMachine: any, wallet: any, setIsUserMinting: any, setAlertState: any, isUserMinting: any, onMint: any, isActive: any, rpcUrl: any, isPresale: any, isWhitelistUser: any}
-) {
-  return (
-    <>
-      {candyMachine?.state.isActive &&
-      candyMachine?.state.gatekeeper &&
-      wallet.publicKey &&
-      wallet.signTransaction ? (
-        <GatewayProvider
-          wallet={{
-            publicKey:
-              wallet.publicKey ||
-              new PublicKey(CANDY_MACHINE_PROGRAM),
-            //@ts-ignore
-            signTransaction: wallet.signTransaction,
-          }}
-          gatekeeperNetwork={
-            candyMachine?.state?.gatekeeper?.gatekeeperNetwork
-          }
-          clusterUrl={rpcUrl}
-          handleTransaction={async (transaction: Transaction) => {
-            setIsUserMinting(true);
-            const userMustSign = transaction.signatures.find(sig =>
-              sig.publicKey.equals(wallet.publicKey!),
-            );
-            if (userMustSign) {
-              setAlertState({open: true,message: 'Please sign one-time Civic Pass issuance',severity: 'info',});
-              try {
-                transaction = await wallet.signTransaction!(
-                  transaction,
-                );
-              } catch (e) {
-                setAlertState({open: true,message: 'User cancelled signing',severity: 'error',});
-                // setTimeout(() => window.location.reload(), 2000);
-                setIsUserMinting(false);
-                throw e;
-              }
-            } else {
-              setAlertState({open: true,message: 'Refreshing Civic Pass',severity: 'info',});
-            }
-            try {
-              await sendTransaction(
-                //props.connection,
-                connection,
-                wallet,
-                transaction,
-                [],
-                true,
-                'confirmed',
-              );
-              setAlertState({open: true,message: 'Please sign minting',severity: 'info',});
-            } catch (e) {
-              setAlertState({open: true,message:'Solana dropped the transaction, please try again',severity: 'warning',});
-              console.error(e);
-              // setTimeout(() => window.location.reload(), 2000);
-              setIsUserMinting(false);
-              throw e;
-            }
-            await onMint();
-          }}
-          broadcastTransaction={false}
-          options={{ autoShowModal: false }}
-        >
-          <MintButton
-            candyMachine={candyMachine}
-            isMinting={isUserMinting}
-            setIsMinting={val => setIsUserMinting(val)}
-            onMint={onMint}
-            isActive={isActive || (isPresale && isWhitelistUser)}
-            rpcUrl={rpcUrl}
-          />
-        </GatewayProvider>
-      ) : (
-        <MintButton
-          candyMachine={candyMachine}
-          isMinting={isUserMinting}
-          setIsMinting={val => setIsUserMinting(val)}
-          onMint={onMint}
-          isActive={isActive || (isPresale && isWhitelistUser)}
-          rpcUrl={rpcUrl}
-        />
-      )}
-    </>
-  )
-}
-
 
 
 const Home = (props: HomeProps) => {
