@@ -1,4 +1,4 @@
-import './App.css';
+//import './App.css';
 import { useMemo } from 'react';
 import * as anchor from '@project-serum/anchor';
 import Home from './Home';
